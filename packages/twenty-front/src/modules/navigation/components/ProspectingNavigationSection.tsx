@@ -17,13 +17,14 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import {
-    IconBuildingSkyscraper,
-    IconCheckbox,
-    IconList,
-    IconNotes,
-    IconSettingsAutomation,
-    IconTargetArrow,
-    IconUser,
+  IconBuildingSkyscraper,
+  IconCheckbox,
+  IconComponent,
+  IconList,
+  IconNotes,
+  IconSettingsAutomation,
+  IconTargetArrow,
+  IconUser,
 } from 'twenty-ui/display';
 import { AnimatedExpandableContainer } from 'twenty-ui/layout';
 import { getAppPath } from '~/utils/navigation/getAppPath';
@@ -42,13 +43,14 @@ const StyledAnimatedExpandableContainer = styled(AnimatedExpandableContainer)`
   transition: all 0.2s ease-in-out;
 `;
 
-type IconComponent = React.ComponentType<{ size?: number; stroke?: number }>;
-
 interface NavigationItemProps {
   label: string;
   Icon: IconComponent;
   objectNamePlural: string;
 }
+
+type NavigationItemWithSubItemsProps = NavigationItemProps;
+type NavigationSingleItemProps = NavigationItemProps;
 
 const NavigationItemWithSubItems = ({
   label,
@@ -74,33 +76,35 @@ const NavigationItemWithSubItems = ({
     }),
   );
 
-  if (!objectMetadataItem) {
-    console.warn(`No metadata found for ${objectNamePlural}`);
-    return null;
-  }
-
   const basePath = useMemo(
     () =>
-      getAppPath(AppPath.RecordIndexPage, {
-        objectNamePlural,
-      }),
+      objectNamePlural === 'subgroups'
+        ? getAppPath(AppPath.SubGroupsPage, { viewId: 'asset' })
+        : getAppPath(AppPath.RecordIndexPage, {
+            objectNamePlural,
+          }),
     [objectNamePlural],
   );
 
   const isItemActive = useMemo(
     () =>
       location.pathname === basePath ||
-      views.some(
-        (view) =>
+      (objectNamePlural === 'subgroups'
+        ? location.pathname ===
+            getAppPath(AppPath.SubGroupsPage, { viewId: 'asset' }) ||
           location.pathname ===
-          getAppPath(
-            AppPath.RecordIndexPage,
-            {
-              objectNamePlural,
-            },
-            { viewId: view.id },
-          ),
-      ),
+            getAppPath(AppPath.SubGroupsPage, { viewId: 'investment' })
+        : views.some(
+            (view) =>
+              location.pathname ===
+              getAppPath(
+                AppPath.RecordIndexPage,
+                {
+                  objectNamePlural,
+                },
+                { viewId: view.id },
+              ),
+          )),
     [location.pathname, basePath, views, objectNamePlural],
   );
 
@@ -109,31 +113,41 @@ const NavigationItemWithSubItems = ({
     [views],
   );
 
-  // Filter out the third view for opportunities
   const filteredViews = useMemo(
     () =>
       objectNamePlural === 'opportunities'
         ? sortedViews.slice(0, 2)
-        : sortedViews,
+        : objectNamePlural === 'subgroups'
+          ? [
+              { id: 'asset', name: 'Asset Allocation', position: 0 },
+              { id: 'investment', name: 'Investment Tracking', position: 1 },
+            ]
+          : sortedViews,
     [objectNamePlural, sortedViews],
   );
 
   const selectedSubItemIndex = useMemo(
     () =>
-      filteredViews.findIndex((view) => contextStoreCurrentViewId === view.id),
-    [filteredViews, contextStoreCurrentViewId],
+      objectNamePlural === 'subgroups'
+        ? filteredViews.findIndex(
+            (view) =>
+              location.pathname ===
+              getAppPath(AppPath.SubGroupsPage, { viewId: view.id }),
+          )
+        : filteredViews.findIndex(
+            (view) => contextStoreCurrentViewId === view.id,
+          ),
+    [
+      filteredViews,
+      contextStoreCurrentViewId,
+      location.pathname,
+      objectNamePlural,
+    ],
   );
 
-  if (filteredViews.length === 0) {
-    return (
-      <NavigationDrawerItem
-        label={label}
-        Icon={Icon}
-        active={isItemActive}
-        to={basePath}
-        aria-label={`${label} (No views available)`}
-      />
-    );
+  if (!objectMetadataItem && objectNamePlural !== 'subgroups') {
+    console.warn(`No metadata found for ${objectNamePlural}`);
+    return null;
   }
 
   return (
@@ -158,20 +172,18 @@ const NavigationItemWithSubItems = ({
         {filteredViews.map((view, index) => (
           <NavigationDrawerSubItem
             key={view.id}
-            label={
-              objectNamePlural === 'opportunities' && index === 0
-                ? 'Leads'
-                : objectNamePlural === 'opportunities' && index === 1
-                  ? 'Sales Pipeline'
-                  : view.name
+            label={view.name}
+            to={
+              objectNamePlural === 'subgroups'
+                ? getAppPath(AppPath.SubGroupsPage, { viewId: view.id })
+                : getAppPath(
+                    AppPath.RecordIndexPage,
+                    {
+                      objectNamePlural,
+                    },
+                    { viewId: view.id },
+                  )
             }
-            to={getAppPath(
-              AppPath.RecordIndexPage,
-              {
-                objectNamePlural,
-              },
-              { viewId: view.id },
-            )}
             active={contextStoreCurrentViewId === view.id}
             subItemState={getNavigationSubItemLeftAdornment({
               index,
@@ -244,6 +256,11 @@ export const ProspectingNavigationSection = () => {
             objectNamePlural="opportunities"
           />
           <NavigationItemWithSubItems
+            label={t`CPM`}
+            Icon={IconList}
+            objectNamePlural="subgroups"
+          />
+          <NavigationSingleItem
             label={t`Tasks`}
             Icon={IconCheckbox}
             objectNamePlural="tasks"

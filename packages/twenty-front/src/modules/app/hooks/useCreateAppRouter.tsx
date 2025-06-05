@@ -9,9 +9,9 @@ import { BlankLayout } from '@/ui/layout/page/components/BlankLayout';
 import { DefaultLayout } from '@/ui/layout/page/components/DefaultLayout';
 
 import {
-  createBrowserRouter,
-  createRoutesFromElements,
-  Route,
+    createBrowserRouter,
+    createRoutesFromElements,
+    Route,
 } from 'react-router-dom';
 import { Authorize } from '~/pages/auth/Authorize';
 import { PasswordReset } from '~/pages/auth/PasswordReset';
@@ -19,6 +19,7 @@ import { SignInUp } from '~/pages/auth/SignInUp';
 import { NotFound } from '~/pages/not-found/NotFound';
 import { RecordIndexPage } from '~/pages/object-record/RecordIndexPage';
 import { RecordShowPage } from '~/pages/object-record/RecordShowPage';
+import { SubGroupsPage } from '~/pages/object-record/SubGroupsPage';
 import { ChooseYourPlan } from '~/pages/onboarding/ChooseYourPlan';
 import { CreateProfile } from '~/pages/onboarding/CreateProfile';
 import { CreateWorkspace } from '~/pages/onboarding/CreateWorkspace';
@@ -56,6 +57,7 @@ export const useCreateAppRouter = (
           <Route path={indexAppPath.getIndexAppPath()} element={<></>} />
           <Route path={AppPath.RecordIndexPage} element={<RecordIndexPage />} />
           <Route path={AppPath.RecordShowPage} element={<RecordShowPage />} />
+          <Route path={AppPath.SubGroupsPage} element={<SubGroupsPage />} />
           <Route
             path={AppPath.SettingsCatchAll}
             element={
